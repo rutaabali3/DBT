@@ -1,0 +1,8 @@
+snapshots:
+  - name: products_snapshot
+    relation: source('store', 'products')
+    config:
+      schema: snapshots
+      unique_key: product_id
+      strategy: check
+      check_cols: ["price", "status"]

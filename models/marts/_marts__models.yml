@@ -1,0 +1,96 @@
+models:
+  - name: dim_customers
+    description: One row per customer, with age band, lifetime spend and loyalty tier.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: loyalty_tier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Bronze", "Silver", "Gold", "Platinum"]
+
+  - name: dim_products
+    description: One row per product.
+    columns:
+      - name: product_id
+        data_tests: [unique, not_null]
+      - name: margin_pct
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: dim_stores
+    description: One row per store. Store 1 is the website.
+    columns:
+      - name: store_id
+        data_tests: [unique, not_null]
+      - name: channel
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["online", "in_store"]
+
+  - name: fct_order_items
+    description: One row per sold order line. Incremental, merged on order_item_id.
+    columns:
+      - name: order_item_id
+        data_tests: [unique, not_null]
+      - name: customer_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: store_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_stores')
+                field: store_id
+      - name: discount_pct
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: net_amount
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+  - name: fct_orders
+    description: One row per order (cancelled included, with order_total 0).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: customer_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+
+  - name: fct_returns
+    description: One row per returned order line.
+    columns:
+      - name: return_id
+        data_tests: [unique, not_null]
+      - name: days_to_return
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 30
+
+  - name: rpt_monthly_sales
+    description: Sales by month, channel, city, department and category. Ready for a dashboard.

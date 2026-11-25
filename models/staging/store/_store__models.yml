@@ -1,0 +1,85 @@
+models:
+  - name: stg_store__customers
+    description: One row per customer.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: gender
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Female", "Male"]
+
+  - name: stg_store__products
+    description: One row per product (a style, before colour and size).
+    columns:
+      - name: product_id
+        data_tests: [unique, not_null]
+
+  - name: stg_store__skus
+    description: One row per SKU, the thing on the shelf (product x colour x size).
+    columns:
+      - name: sku_id
+        data_tests: [unique, not_null]
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_store__products')
+                field: product_id
+
+  - name: stg_store__stores
+    description: One row per store. Store 1 is the website.
+    columns:
+      - name: store_id
+        data_tests: [unique, not_null]
+
+  - name: stg_store__orders
+    description: One row per order.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_store__customers')
+                field: customer_id
+      - name: order_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["COMPLETED", "SHIPPED", "CANCELLED"]
+      - name: payment_method
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["CASH", "CARD", "CASH_ON_DELIVERY", "JAZZCASH", "EASYPAISA"]
+      - name: promo_code
+        description: Every code used must exist in the promo_codes seed.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('promo_codes')
+                field: promo_code
+
+  - name: stg_store__order_items
+    description: One row per order line.
+    columns:
+      - name: order_item_id
+        data_tests: [unique, not_null]
+      - name: sku_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_store__skus')
+                field: sku_id
+
+  - name: stg_store__returns
+    description: One row per returned order line.
+    columns:
+      - name: return_id
+        data_tests: [unique, not_null]
+      - name: order_item_id
+        data_tests: [unique, not_null]
